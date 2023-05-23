@@ -1,7 +1,6 @@
 <?php
 
-// $router->get('quotes', [
-//    'middleware' => 'auth',
-//    'as'   => 'quotes',
-//    'uses' => 'QuotesController@index',
-// ]);
+$router->post('api/v1/images/{id}/sam-embedding', [
+   'middleware' => ['api', 'auth:web,api'],
+   'uses' => 'ImageEmbeddingController@store',
+]);
