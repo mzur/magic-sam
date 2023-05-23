@@ -6,7 +6,7 @@ use Biigle\Services\Modules;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 
-class ModuleServiceProvider extends ServiceProvider
+class MagicSamServiceProvider extends ServiceProvider
 {
 
    /**
