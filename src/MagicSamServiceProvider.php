@@ -1,6 +1,6 @@
 <?php
 
-namespace Biigle\Modules\Module;
+namespace Biigle\Modules\MagicSam;
 
 use Biigle\Services\Modules;
 use Illuminate\Routing\Router;
@@ -18,18 +18,18 @@ class ModuleServiceProvider extends ServiceProvider
    */
     public function boot(Modules $modules, Router $router)
     {
-        $this->loadViewsFrom(__DIR__.'/resources/views', 'module');
+        $this->loadViewsFrom(__DIR__.'/resources/views', 'magic-sam');
 
         $router->group([
-            'namespace' => 'Biigle\Modules\Module\Http\Controllers',
+            'namespace' => 'Biigle\Modules\MagicSam\Http\Controllers',
             'middleware' => 'web',
         ], function ($router) {
             require __DIR__.'/Http/routes.php';
         });
 
-        $modules->register('module', [
+        $modules->register('magic-sam', [
             'viewMixins' => [
-                'dashboardMain',
+                //
             ],
             'controllerMixins' => [
                 //
@@ -40,7 +40,7 @@ class ModuleServiceProvider extends ServiceProvider
         ]);
 
         $this->publishes([
-            __DIR__.'/public/assets' => public_path('vendor/module'),
+            __DIR__.'/public/assets' => public_path('vendor/magic-sam'),
         ], 'public');
     }
 

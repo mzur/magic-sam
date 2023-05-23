@@ -1,3 +1,3 @@
-import Quotes from './quotes';
+// import Quotes from './quotes';
 
-biigle.$mount('quotes-container', Quotes);
+// biigle.$mount('quotes-container', Quotes);

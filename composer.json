@@ -1,6 +1,6 @@
 {
-    "name": "biigle/module",
-    "description": "A template for a new BIIGLE module.",
+    "name": "biigle/magic-sam",
+    "description": "BIIGLE module for the Magic SAM image annotation instrument .",
     "keywords": ["biigle", "biigle-module"],
     "license": "GPL-3.0-only",
     "support": {
@@ -16,7 +16,14 @@
     ],
     "autoload": {
       "psr-4": {
-         "Biigle\\Modules\\Module\\": "src"
+         "Biigle\\Modules\\MagicSam\\": "src"
+      },
+      "extra": {
+        "laravel": {
+            "providers": [
+                "Biigle\\Modules\\MagicSam\\MagicSamServiceProvider"
+            ]
+        }
       }
     }
 }
