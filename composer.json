@@ -17,13 +17,13 @@
     "autoload": {
       "psr-4": {
          "Biigle\\Modules\\MagicSam\\": "src"
-      },
-      "extra": {
-        "laravel": {
-            "providers": [
-                "Biigle\\Modules\\MagicSam\\MagicSamServiceProvider"
-            ]
-        }
+      }
+    },
+    "extra": {
+      "laravel": {
+          "providers": [
+              "Biigle\\Modules\\MagicSam\\MagicSamServiceProvider"
+          ]
       }
     }
 }
