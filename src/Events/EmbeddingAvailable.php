@@ -9,6 +9,7 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class EmbeddingAvailable implements ShouldBroadcast
 {
@@ -73,8 +74,13 @@ class EmbeddingAvailable implements ShouldBroadcast
      */
     public function broadcastWith()
     {
-        $url = Storage::disk(config('magic_sam.embedding_storage_disk'))
-            ->temporaryUrl($this->filename, now()->addHour());
+        $disk = Storage::disk(config('magic_sam.embedding_storage_disk'));
+
+        if ($disk->providesTemporaryUrls()) {
+            $url = $disk->temporaryUrl($this->filename, now()->addHour());
+        } else {
+            $url = $disk->url($this->filename);
+        }
 
         return [
             'url' => $url,

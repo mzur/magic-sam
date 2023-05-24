@@ -23,5 +23,11 @@
     "sass-loader": "^8.0.0",
     "vue-loader": "^15.9.6",
     "vue-template-compiler": "^2.6.11"
+  },
+  "dependencies": {
+    "@biigle/ol": "^5.3.1",
+    "magic-wand-tool": "^1.1.7",
+    "npyjs": "^0.4.0",
+    "onnxruntime-web": "1.14.0"
   }
 }

@@ -74,6 +74,7 @@ class GenerateEmbedding
             EmbeddingAvailable::dispatch($filename, $this->user);
         } catch (Exception $e) {
             EmbeddingFailed::dispatch($this->user);
+            throw $e;
         }
     }
 

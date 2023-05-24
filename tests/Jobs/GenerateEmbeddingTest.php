@@ -83,7 +83,7 @@ class GenerateEmbeddingTest extends TestCase
             $job->handle();
             $this->fail('Expected an exception');
         } catch (Exception $e) {
-            //
+            $this->assertEquals('', $e->getMessage());
         }
 
         Event::assertDispatched(function (EmbeddingFailed $event) use ($user) {
@@ -103,7 +103,7 @@ class GenerateEmbeddingStub extends GenerateEmbedding
     {
         $this->pythonCalled = true;
         if ($this->throw) {
-            throw new Exception;
+            throw new Exception('');
         }
     }
 

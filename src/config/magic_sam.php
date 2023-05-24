@@ -9,7 +9,7 @@ return [
     /*
     | Queue to submit jobs to compute embeddings to.
     */
-    'request_queue' => env('MAGIC_SAM_REQUEST_QUEUE', 'gpu-quick'),
+    'request_queue' => env('MAGIC_SAM_REQUEST_QUEUE', 'default'),
 
     /*
     | Path to the Python executable.
@@ -45,7 +45,7 @@ return [
     /*
     | Path to store the model checkpoint to.
     */
-    'model_path' => storage_path('magic_sam').'/sam_vit_h_4b8939.pth',
+    'model_path' => storage_path('magic_sam').'/sam_checkpoint.pth',
 
     /*
      | Specifies which queue should be used for the broadcast events.

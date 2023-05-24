@@ -1,3 +1,4 @@
-// import Quotes from './quotes';
+import {annotationCanvasMixins} from './import';
+import MagicSamMixin from './MagicSamMixin';
 
-// biigle.$mount('quotes-container', Quotes);
+annotationCanvasMixins.push(MagicSamMixin);
