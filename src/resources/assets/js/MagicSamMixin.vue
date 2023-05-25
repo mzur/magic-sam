@@ -84,7 +84,6 @@ export default {
                 magicSamInteraction.updateEmbedding(this.image, event.url)
                     .then(() => magicSamInteraction.setActive(true))
                     .then(() => this.loadingMagicSamEmbedding = false);
-                ;
             }
         },
         handleSamEmbeddingFailed() {

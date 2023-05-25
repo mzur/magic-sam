@@ -1,11 +1,7 @@
 import Feature from '@biigle/ol/Feature';
 import MagicWand from 'magic-wand-tool';
-import Point from '@biigle/ol/geom/Point';
 import PointerInteraction from '@biigle/ol/interaction/Pointer';
 import Polygon from '@biigle/ol/geom/Polygon';
-import RegularShape from '@biigle/ol/style/RegularShape';
-import Stroke from '@biigle/ol/style/Stroke';
-import Style from '@biigle/ol/style/Style';
 import VectorLayer from '@biigle/ol/layer/Vector';
 import VectorSource from '@biigle/ol/source/Vector';
 import {InferenceSession, Tensor} from "onnxruntime-web";
@@ -47,30 +43,15 @@ class MagicSamInteraction extends PointerInteraction {
 
         this.sketchStyle = options.style === undefined ? null : options.style;
 
-        // The point that indicates the downPoint where drawing of the sketch started.
-        this.isShowingPoint = false;
-        this.indicatorPoint = new Feature(new Point([20, 20]));
-        if (options.indicatorPointStyle !== undefined) {
-            this.indicatorPoint.setStyle(options.indicatorPointStyle);
-        }
-        this.indicatorSource = new VectorSource();
-        this.map.addLayer(new VectorLayer({
-            source: this.indicatorSource,
-            zIndex: 200,
-        }));
-
         this.model = null;
         this.embedding = null;
         this.imageSizeTensor = null;
         this.samSizeTensor = null;
         this.imageSamScale = null;
 
-        // wasm needs to be copied manually to public/assets/scripts/ folder
+        // wasm needs to be present in the assets folder.
         InferenceSession.create(options.onnxUrl, {executionProviders: ['wasm']})
             .then(response => this.model = response);
-
-        // Update the snapshot and set event listeners if the interaction is active.
-        this.toggleActive();
     }
 
     updateEmbedding(image, url) {
@@ -90,113 +71,30 @@ class MagicSamInteraction extends PointerInteraction {
     }
 
     /**
-     * Scaling factor of high DPI displays. The snapshot will be by a factor of
-     * 'scaling' larger than the map so we have to include this factor in the
-     * transformation of the mouse position.
-     *
-     * @return {Float}
-     */
-    // getHighDpiScaling() {
-    //     return this.snapshot.height / this.map.getSize()[1];
-    // }
-
-    /**
-     * Convert OpenLayers coordinates on the image layer to coordinates on the snapshot.
-     *
-     * @param {Array} points
-     *
-     * @return {Array}
-     */
-    // toSnapshotCoordinates(points) {
-    //     let extent = this.map.getView().calculateExtent(this.map.getSize());
-    //     let height = this.snapshot.height;
-    //     let factor = this.getHighDpiScaling() / this.map.getView().getResolution();
-
-    //     return points.map(function (point) {
-    //         return [
-    //             Math.round((point[0] - extent[0]) * factor),
-    //             height - Math.round((point[1] - extent[1]) * factor),
-    //         ];
-    //     });
-    // }
-
-    /**
-     * Convert coordinates on the snapshot to OpenLayers coordinates on the image layer.
-     *
-     * @param {Array} points
-     *
-     * @return {Array}
-     */
-    // fromSnapshotCoordinates(points) {
-    //     let extent = this.map.getView().calculateExtent(this.map.getSize());
-    //     let height = this.snapshot.height;
-    //     let factor = this.map.getView().getResolution() / this.getHighDpiScaling();
-
-    //     return points.map(function (point) {
-    //         return [
-    //             Math.round((point[0] * factor) + extent[0]),
-    //             Math.round(((height - point[1]) * factor) + extent[1]),
-    //         ];
-    //     });
-    // }
-
-    /**
      * Finish drawing of a sketch.
      */
-    // handleUpEvent() {
-    //     this.currentThreshold = this.colorThreshold;
+    handleUpEvent() {
+        if (this.sketchFeature) {
+            this.dispatchEvent({type: 'drawend', feature: this.sketchFeature});
+        }
 
-    //     if (this.isShowingCross) {
-    //         this.sketchSource.removeFeature(this.sketchFeature);
-    //     } else {
-    //     }
-
-    //     this.dispatchEvent({type: 'drawend', feature: this.sketchFeature});
-    //     this.sketchFeature = null;
-
-    //     this.indicatorSource.clear();
-    //     this.isShowingPoint = false;
-    //     this.isShowingCross = false;
-
-    //     return false;
-    // }
+        return true;
+    }
 
     /**
      * Start drawing of a sketch.
      */
-    // handleDownEvent(e) {
-    //     this.downPoint[0] = Math.round(e.coordinate[0]);
-    //     this.downPoint[1] = Math.round(e.coordinate[1]);
-    //     this.drawSketch();
-    //     this.indicatorPoint.getGeometry().setCoordinates(this.downPoint);
-    //     this.indicatorCross.getGeometry().setCoordinates(this.downPoint);
-    //     this.indicatorSource.clear();
-    //     this.indicatorSource.addFeature(this.indicatorCross);
-    //     this.isShowingCross = true;
-    //     this.isShowingPoint = false;
-
-    //     return true;
-    // }
+    handleDownEvent(e) {
+        return true;
+    }
 
     /**
      * Update the target point.
      */
     handleMoveEvent(e) {
-        // if (!this.isShowingPoint) {
-        //     this.indicatorSource.clear();
-        //     this.indicatorSource.addFeature(this.indicatorPoint);
-        //     this.isShowingPoint = true;
-        //     this.isShowingCross = false;
-        // }
-        // this.indicatorPoint.getGeometry().setCoordinates(e.coordinate);
-
-        let t0, t1, t2, t3, t4, t5, t6;
-
-        t0 = performance.now();
-
         let pointCoords = new Float32Array(4);
         let pointLabels = new Float32Array(2);
-        let [height, width] = this.imageSizeTensor.data;
+        let [height, ] = this.imageSizeTensor.data;
         let [samHeight, samWidth] = this.samSizeTensor.data;
 
         pointCoords[0] = e.coordinate[0] * this.imageSamScale;                // x
@@ -213,8 +111,6 @@ class MagicSamInteraction extends PointerInteraction {
         let pointCoordsTensor = new Tensor("float32", pointCoords, [1, 2, 2]);
         let pointLabelsTensor = new Tensor("float32", pointLabels, [1, 2]);
 
-        t1 = performance.now();
-
         // There is no previous mask, so default to 0
         const maskInput = new Tensor(
             "float32",
@@ -222,8 +118,6 @@ class MagicSamInteraction extends PointerInteraction {
             [1, 1, 256, 256]
         );
         const hasMaskInput = new Tensor("float32", [0]);
-
-        t2 = performance.now();
 
         const feeds = {
             image_embeddings: this.embedding,
@@ -236,10 +130,7 @@ class MagicSamInteraction extends PointerInteraction {
             has_mask_input: hasMaskInput,
         }
 
-        t3 = performance.now();
-        // Run the SAM ONNX model with the feeds returned from modelData()
         this.model.run(feeds).then((results) => {
-            t4 = performance.now();
             const output = results[this.model.outputNames[0]];
 
             const thresholdedOutput = output.data.map(pixel => pixel > 0 ? 1 : 0);
@@ -273,8 +164,6 @@ class MagicSamInteraction extends PointerInteraction {
                 .map(([x, y]) => [x / this.imageSamScale, y / this.imageSamScale])
                 // Invert y axis for OpenLayers coordinates.
                 .map(([x, y]) => [x, height - y]);
-            t5 = performance.now();
-
 
             if (this.sketchFeature) {
                 this.sketchFeature.getGeometry().setCoordinates([points]);
@@ -286,8 +175,6 @@ class MagicSamInteraction extends PointerInteraction {
                 this.sketchSource.addFeature(this.sketchFeature);
 
             }
-            t6 = performance.now()
-            console.log('ol', Math.round(t6 - t5), 'tracing', Math.round(t5 - t4), 'sam onnx', Math.round(t4 - t3), 'gather input', Math.round(t3 - t2), 'constant inputs', Math.round(t2 - t1), 'prompt', Math.round(t1 - t0));
         });
     }
 
@@ -295,18 +182,9 @@ class MagicSamInteraction extends PointerInteraction {
      * Update event listeners depending on the active state of the interaction.
      */
     toggleActive() {
-        if (this.getActive()) {
-            // this.map.on(['moveend', 'change:size'], this.updateSnapshot.bind(this));
-            // this.updateSnapshot();
-        } else {
-            // this.map.un(['moveend', 'change:size'], this.updateSnapshot.bind(this));
-            this.indicatorSource.clear();
-            this.isShowingPoint = false;
-            this.isShowingCross = false;
-            if (this.sketchFeature) {
-                this.sketchSource.removeFeature(this.sketchFeature);
-                this.sketchFeature = null;
-            }
+        if (!this.getActive() && this.sketchFeature) {
+            this.sketchSource.removeFeature(this.sketchFeature);
+            this.sketchFeature = null;
         }
     }
 
