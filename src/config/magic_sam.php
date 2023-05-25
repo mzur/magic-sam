@@ -57,8 +57,13 @@ return [
     |   --output sam_vit_l_0b3195.onnx \
     |   --quantize-out sam_vit_l_0b3195.quantized.onnx
     |
+    | It is important to observe the onnx opset compatibility. The ONNX files provided
+    | in this package were generated with onnx==1.13.1 and onnxruntime==1.14.0 to be
+    | loaded with onnxruntime-web==1.14.0.
+    |
     | See: https://github.com/facebookresearch/segment-anything#onnx-export
     | See: https://github.com/biigle/core/issues/580#issuecomment-1562458609
+    | See: https://onnxruntime.ai/docs/reference/compatibility.html#onnx-opset-support
     */
     'onnx_file' => env('MAGIC_SAM_ONNX_FILE', 'sam_vit_h_4b8939.quantized.onnx'),
 
