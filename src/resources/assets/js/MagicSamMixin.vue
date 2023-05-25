@@ -19,14 +19,25 @@ export default {
     data: function () {
         return {
             loadingMagicSam: false,
+            loadingMagicSamTakesLong: false,
         };
     },
     computed: {
         isMagicSamming() {
             return this.interactionMode === 'magicSam';
         },
+        magicSamButtonClass() {
+            return this.loadingMagicSamTakesLong ? 'loading-magic-sam-long' : '';
+        },
     },
     methods: {
+        startLoadingMagicSam() {
+            this.loadingMagicSam = true;
+        },
+        finishLoadingMagicSam() {
+            this.loadingMagicSam = false;
+            this.loadingMagicSamTakesLong = false;
+        },
         toggleMagicSam() {
             if (this.isMagicSamming) {
                 this.resetInteractionMode();
@@ -45,13 +56,19 @@ export default {
                 if (loadedImageId === this.image.id) {
                     magicSamInteraction.setActive(true);
                 } else {
-                    this.loadingMagicSam = true;
+                    this.startLoadingMagicSam();
                     ImageEmbeddingApi.save({id: this.image.id}, {})
                         .then((response) => {
                             if (response.body.url !== null) {
                                 this.handleSamEmbeddingAvailable(response.body);
+                            } else {
+                                this.loadingMagicSamTakesLong = true;
                             }
-                        }, handleErrorResponse);
+                        }, (response) => {
+                            this.resetInteractionMode();
+                            this.finishLoadingMagicSam();
+                            handleErrorResponse(response);
+                        });
                 }
             } else {
                 this.requireSelectedLabel();
@@ -60,14 +77,15 @@ export default {
         handleSamEmbeddingAvailable(event) {
             if (this.loadingMagicSam) {
                 loadedImageId = this.image.id;
-                magicSamInteraction.once('warmup', () => this.loadingMagicSam = false)
+                magicSamInteraction.once('warmup', this.finishLoadingMagicSam);
                 magicSamInteraction.updateEmbedding(this.image, event.url)
                     .then(() => magicSamInteraction.setActive(true));
             }
         },
         handleSamEmbeddingFailed() {
             Messages.warning('Could not load the image embedding.');
-            this.loadingMagicSam = false;
+            this.finishLoadingMagicSam();
+            this.resetInteractionMode();
         },
         initSamInteraction() {
             magicSamInteraction = new MagicSamInteraction({

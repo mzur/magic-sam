@@ -1,1 +1,38 @@
-//
+.loading-magic-sam-long {
+    position: relative;
+
+    &:before {
+        font-family: "Font Awesome 5 Free";
+        font-weight: 400;
+        content: "\f005";
+        color: yellow;
+        position: absolute;
+        left: 15px;
+        top: 10px;
+        offset-path: path("M 0,0 C 0,-15 0,-15 -20,-30 M 0,0 C 0,-15 0,-15 20,-30");
+        animation: magic-sam-star 2.5s infinite ease-out;
+    }
+}
+
+@keyframes magic-sam-star {
+  0% {
+    offset-distance: 0%;
+    opacity: 1;
+  }
+  20% {
+    offset-distance: 50%;
+    opacity: 0;
+  }
+  21% {
+    offset-distance: 50%;
+    opacity: 1;
+  }
+  40% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
