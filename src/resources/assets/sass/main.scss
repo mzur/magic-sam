@@ -9,8 +9,11 @@
         position: absolute;
         left: 15px;
         top: 10px;
-        offset-path: path("M 0,0 C 0,-15 0,-15 -20,-30 M 0,0 C 0,-15 0,-15 20,-30");
-        animation: magic-sam-star 2.5s infinite ease-out;
+        opacity: 0;
+        @supports (offset-distance: 0%) {
+            offset-path: path("M 0,0 C 0,-15 0,-15 -20,-30 M 0,0 C 0,-15 0,-15 20,-30");
+            animation: magic-sam-star 2.5s infinite ease-out;
+        }
     }
 }
 
