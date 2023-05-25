@@ -18,6 +18,7 @@ mix.options({processCssUrls: false});
 mix.setPublicPath('src/public');
 
 mix.js('src/resources/assets/js/main.js', 'assets/scripts').vue()
+    .copy('./node_modules/onnxruntime-web/dist/*.wasm', './src/public/assets/scripts')
     .sass('src/resources/assets/sass/main.scss', 'assets/styles')
     .publish({
         provider: 'Biigle\\Modules\\MagicSam\\MagicSamServiceProvider',
