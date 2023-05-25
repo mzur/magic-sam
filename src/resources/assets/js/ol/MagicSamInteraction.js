@@ -62,6 +62,7 @@ class MagicSamInteraction extends PointerInteraction {
         this.model = null;
         this.embedding = null;
         this.imageSizeTensor = null;
+        this.samSizeTensor = null;
         this.imageSamScale = null;
 
         // wasm needs to be copied manually to public/assets/scripts/ folder
@@ -75,6 +76,10 @@ class MagicSamInteraction extends PointerInteraction {
     updateEmbedding(image, url) {
         this.imageSizeTensor = new Tensor("float32", [image.height, image.width]);
         this.imageSamScale = LONG_SIDE_LENGTH / Math.max(image.height, image.width);
+        this.samSizeTensor = new Tensor("float32", [
+            Math.round(image.height * this.imageSamScale),
+            Math.round(image.width * this.imageSamScale),
+        ]);
 
         let npy = new npyjs();
 
@@ -136,19 +141,6 @@ class MagicSamInteraction extends PointerInteraction {
     // }
 
     /**
-     * Convert MagicWand point objects to OpenLayers point arrays.
-     *
-     * @param {Array} points
-     *
-     * @return {Array}
-     */
-    fromMagicWandCoordinates(points) {
-        return points.map(function (point) {
-            return [point.x, point.y];
-        });
-    }
-
-    /**
      * Finish drawing of a sketch.
      */
     // handleUpEvent() {
@@ -205,7 +197,7 @@ class MagicSamInteraction extends PointerInteraction {
         let pointCoords = new Float32Array(4);
         let pointLabels = new Float32Array(2);
         let [height, width] = this.imageSizeTensor.data;
-
+        let [samHeight, samWidth] = this.samSizeTensor.data;
 
         pointCoords[0] = e.coordinate[0] * this.imageSamScale;                // x
         pointCoords[1] = (height - e.coordinate[1]) * this.imageSamScale;     // y
@@ -237,7 +229,9 @@ class MagicSamInteraction extends PointerInteraction {
             image_embeddings: this.embedding,
             point_coords: pointCoordsTensor,
             point_labels: pointLabelsTensor,
-            orig_im_size: this.imageSizeTensor,
+            // Compute the mask on the downscaled size to make inference and tracing
+            // faster. We scale the tracing result to the original size later.
+            orig_im_size: this.samSizeTensor,
             mask_input: maskInput,
             has_mask_input: hasMaskInput,
         }
@@ -252,9 +246,14 @@ class MagicSamInteraction extends PointerInteraction {
 
             let imageData = {
                 data: new Uint8Array(thresholdedOutput),
-                width: width,
-                height: height,
-                bounds: { minX: 0, maxX: width, minY: 0, maxY: height }
+                width: samWidth,
+                height: samHeight,
+                bounds: {
+                    minX: 0,
+                    maxX: samWidth,
+                    minY: 0,
+                    maxY: samHeight
+                },
             };
 
             let contour = MagicWand.traceContours(imageData)
@@ -269,8 +268,11 @@ class MagicSamInteraction extends PointerInteraction {
                 }
             }
 
-            // let points = contour.points;
-            let points = this.fromMagicWandCoordinates(contour.points).map(([x, y]) => [x, height - y]);
+            let points = contour.points.map(point => [point.x, point.y])
+                // Scale up to original size.
+                .map(([x, y]) => [x / this.imageSamScale, y / this.imageSamScale])
+                // Invert y axis for OpenLayers coordinates.
+                .map(([x, y]) => [x, height - y]);
             t5 = performance.now();
 
 
