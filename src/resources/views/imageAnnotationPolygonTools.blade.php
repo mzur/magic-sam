@@ -4,6 +4,6 @@
 @push('scripts')
 <script src="{{ cachebust_asset('vendor/magic-sam/scripts/main.js') }}"></script>
 <script type="text/javascript">
-    biigle.$declare('magic-sam.onnx-url', '{{cachebust_asset('vendor/magic-sam/sam_vit_b_01ec64.quantized.onnx')}}');
+    biigle.$declare('magic-sam.onnx-url', '{{cachebust_asset('vendor/magic-sam/'.config('magic_sam.onnx_file'))}}');
 </script>
 @endpush

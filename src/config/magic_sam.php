@@ -31,9 +31,37 @@ return [
     /*
     | URL from which to download the model checkpoint.
     |
+    | Important: The model checkpoint mst match with the ONNX file (see below)!
+    |
     | See: https://github.com/facebookresearch/segment-anything#model-checkpoints
     */
     'model_url' => env('MAGIC_SAM_MODEL_URL', 'https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth'),
+
+    /*
+    | Model ONNX file.
+    |
+    | Important: The ONNX file must match with the model checkpoint (see above)!
+    |
+    | Available files are:
+    |    - sam_vit_h_4b8939.quantized.onnx
+    |    - sam_vit_l_0b3195.quantized.onnx
+    |    - sam_vit_b_01ec64.quantized.onnx
+    |
+    | If you provide your own ONNX, place it in "public/vendor/magic-sam/".
+    |
+    | Example command to generate an ONNX (in the segment-anything repo):
+    | python scripts/export_onnx_model.py \
+    |   --checkpoint sam_vit_l_0b3195.pth \
+    |   --model-type vit_l \
+    |   --use-single-mask \
+    |   --output sam_vit_l_0b3195.onnx \
+    |   --quantize-out sam_vit_l_0b3195.quantized.onnx
+    |
+    | See: https://github.com/facebookresearch/segment-anything#onnx-export
+    | See: https://github.com/biigle/core/issues/580#issuecomment-1562458609
+    */
+    'onnx_file' => env('MAGIC_SAM_ONNX_FILE', 'sam_vit_h_4b8939.quantized.onnx'),
+
 
     /*
     | The SAM model type.
