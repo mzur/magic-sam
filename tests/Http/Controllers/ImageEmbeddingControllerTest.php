@@ -6,6 +6,7 @@ use ApiTestCase;
 use Biigle\Image;
 use Biigle\Modules\MagicSam\Jobs\GenerateEmbedding;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 
 class ImageEmbeddingControllerTest extends ApiTestCase
 {
@@ -24,7 +25,9 @@ class ImageEmbeddingControllerTest extends ApiTestCase
         $this->postJson("/api/v1/images/{$image->id}/sam-embedding")->assertStatus(403);
 
         $this->beGuest();
-        $this->postJson("/api/v1/images/{$image->id}/sam-embedding")->assertStatus(200);
+        $this->postJson("/api/v1/images/{$image->id}/sam-embedding")
+            ->assertStatus(200)
+            ->assertExactJson(['url' => null]);
 
         Queue::assertPushedOn('gpu-quick', function (GenerateEmbedding $job) use ($image) {
             $this->assertEquals($image->id, $job->image->id);
@@ -32,5 +35,21 @@ class ImageEmbeddingControllerTest extends ApiTestCase
 
             return true;
         });
+    }
+
+    public function testStoreExists()
+    {
+        Queue::fake();
+        $image = Image::factory()->create(['volume_id' => $this->volume()->id]);
+
+        $disk = Storage::fake('test');
+        config(['magic_sam.embedding_storage_disk' => 'test']);
+        $disk->put("{$image->id}.npy", 'abc');
+
+        $this->beGuest();
+        $this->postJson("/api/v1/images/{$image->id}/sam-embedding")
+            ->assertStatus(200)
+            ->assertJsonPath('url', fn ($url) => !is_null($url));
+        Queue::assertNothingPushed();
     }
 }

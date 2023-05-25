@@ -7,6 +7,7 @@ use Biigle\Image;
 use Biigle\Modules\MagicSam\Jobs\GenerateEmbedding;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 
 class ImageEmbeddingController extends Controller
 {
@@ -17,9 +18,14 @@ class ImageEmbeddingController extends Controller
      * @apiGroup Images
      * @apiName StoreSamEmbedding
      * @apiPermission projectMember
-     * @apiDescription This will generate a SAM embedding for the image and propagate the download URL to the user's Websockets channel.
+     * @apiDescription This will generate a SAM embedding for the image and propagate the download URL to the user's Websockets channel. If an embedding already exists, it returns the download URL directly.
      *
      * @apiParam {Number} id The image ID.
+     *
+     * @apiSuccessExample {json} Success response:
+     * {
+     *    "url": "https://example.com/storage/1.npy"
+     * }
      *
      * @param Request $request
      * @param int $id
@@ -30,6 +36,22 @@ class ImageEmbeddingController extends Controller
         $image = Image::findOrFail($id);
         $this->authorize('access', $image);
 
-        Queue::pushOn(config('magic_sam.request_queue'), new GenerateEmbedding($image, $request->user()));
+        $disk = Storage::disk(config('magic_sam.embedding_storage_disk'));
+        $filename = "{$image->id}.npy";
+        $url = null;
+        if ($disk->exists($filename)) {
+            if ($disk->providesTemporaryUrls()) {
+                $url = $disk->temporaryUrl($filename, now()->addHour());
+            } else {
+                $url = $disk->url($filename);
+            }
+        } else {
+            Queue::pushOn(
+                config('magic_sam.request_queue'),
+                new GenerateEmbedding($image, $request->user())
+            );
+        }
+
+        return ['url' => $url];
     }
 }

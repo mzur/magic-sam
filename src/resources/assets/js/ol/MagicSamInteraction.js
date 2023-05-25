@@ -48,6 +48,7 @@ class MagicSamInteraction extends PointerInteraction {
         this.imageSizeTensor = null;
         this.samSizeTensor = null;
         this.imageSamScale = null;
+        this.waitingForModelWarmup = false;
 
         // wasm needs to be present in the assets folder.
         InferenceSession.create(options.onnxUrl, {executionProviders: ['wasm']})
@@ -55,6 +56,7 @@ class MagicSamInteraction extends PointerInteraction {
     }
 
     updateEmbedding(image, url) {
+        this.waitingForModelWarmup = true;
         this.imageSizeTensor = new Tensor("float32", [image.height, image.width]);
         this.imageSamScale = LONG_SIDE_LENGTH / Math.max(image.height, image.width);
         this.samSizeTensor = new Tensor("float32", [
@@ -84,7 +86,7 @@ class MagicSamInteraction extends PointerInteraction {
     /**
      * Start drawing of a sketch.
      */
-    handleDownEvent(e) {
+    handleDownEvent() {
         return true;
     }
 
@@ -92,6 +94,13 @@ class MagicSamInteraction extends PointerInteraction {
      * Update the target point.
      */
     handleMoveEvent(e) {
+        if (!this.model) {
+            // Model initialization could take longer than everything else. The move
+            // event will be called repeatedly, so we can just exit here until the model
+            // is available.
+            return;
+        }
+
         let pointCoords = new Float32Array(4);
         let pointLabels = new Float32Array(2);
         let [height, ] = this.imageSizeTensor.data;
@@ -131,6 +140,11 @@ class MagicSamInteraction extends PointerInteraction {
         }
 
         this.model.run(feeds).then((results) => {
+            if (this.waitingForModelWarmup) {
+                this.dispatchEvent({type: 'warmup'});
+                this.waitingForModelWarmup = false;
+            }
+
             const output = results[this.model.outputNames[0]];
 
             const thresholdedOutput = output.data.map(pixel => pixel > 0 ? 1 : 0);
@@ -186,13 +200,6 @@ class MagicSamInteraction extends PointerInteraction {
             this.sketchSource.removeFeature(this.sketchFeature);
             this.sketchFeature = null;
         }
-    }
-
-    /**
-     * Update the layer to get the image information from.
-     */
-    setLayer(layer) {
-        this.layer = layer;
     }
 
 }
