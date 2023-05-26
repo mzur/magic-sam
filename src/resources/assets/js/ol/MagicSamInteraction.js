@@ -7,6 +7,7 @@ import Polygon from '@biigle/ol/geom/Polygon';
 import VectorLayer from '@biigle/ol/layer/Vector';
 import VectorSource from '@biigle/ol/source/Vector';
 import {InferenceSession, Tensor} from "onnxruntime-web";
+import {throttle} from '../import';
 
 const LONG_SIDE_LENGTH = 1024;
 
@@ -119,20 +120,24 @@ class MagicSamInteraction extends PointerInteraction {
             return;
         }
 
-        let [height, ] = this.imageSizeTensor.data;
-        let pointCoords = new Float32Array([
-            e.coordinate[0] * this.imageSamScale,
-            (height - e.coordinate[1]) * this.imageSamScale,
-            // Add in the extra point when only clicks and no box.
-            // The extra point is at (0, 0) with label -1.
-            0,
-            0,
-        ]);
+        // Do this not faster than once per second.
+        throttle(() => {
+            let [height, ] = this.imageSizeTensor.data;
+            let pointCoords = new Float32Array([
+                e.coordinate[0] * this.imageSamScale,
+                (height - e.coordinate[1]) * this.imageSamScale,
+                // Add in the extra point when only clicks and no box.
+                // The extra point is at (0, 0) with label -1.
+                0,
+                0,
+            ]);
 
-        let pointCoordsTensor = new Tensor("float32", pointCoords, [1, 2, 2]);
-        const feeds = this._getFeeds(pointCoordsTensor);
+            let pointCoordsTensor = new Tensor("float32", pointCoords, [1, 2, 2]);
+            const feeds = this._getFeeds(pointCoordsTensor);
 
-        this.model.run(feeds).then(this._processInferenceResult.bind(this));
+            this.model.run(feeds).then(this._processInferenceResult.bind(this));
+        }, 1000, 'magic-sam-move');
+
     }
 
     /**
