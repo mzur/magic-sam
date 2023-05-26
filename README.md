@@ -21,7 +21,7 @@ This is a BIIGLE module that offers the Magic SAM image annotation instrument.
 
 ## Configuration
 
-Image embeddings are computed in jobs submitted to the `default` on the CPU. They require a queue worker Docker container that satisfies the Python [requirements](requirements.txt) of this repository. Embeddings can be computed much faster on a GPU. You can cnfigure the queue name with the `MAGIC_SAM_REQUEST_QUEUE` and the device (`cpu` or `gpu`) with the `MAGIC_SAM_DEVICE` environment variables.
+Image embeddings are computed in jobs submitted to the `default` on the CPU. They require a queue worker Docker container that satisfies the Python [requirements](requirements.txt) of this repository. Embeddings can be computed much faster on a GPU. You can cnfigure the queue name with the `MAGIC_SAM_REQUEST_QUEUE` and the device (`cpu` or `cuda`) with the `MAGIC_SAM_DEVICE` environment variables.
 
 Image embedding files are automatically deleted after 30 days. You can configure this with the `MAGIC_SAM_PRUNE_AGE_DAYS` environment variable.
 

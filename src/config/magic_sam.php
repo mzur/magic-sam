@@ -29,7 +29,7 @@ return [
     /*
     | The device to compute the SAM embedding on.
     |
-    | Devices: cpu, gpu
+    | Devices: cpu, cuda
     */
     'device' => env('MAGIC_SAM_DEVICE', 'cpu'),
 
