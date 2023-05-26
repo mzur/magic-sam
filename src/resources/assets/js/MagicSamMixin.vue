@@ -125,9 +125,11 @@ export default {
                 });
         },
         handleSamEmbeddingFailed() {
-            Messages.warning('Could not load the image embedding.');
-            this.finishLoadingMagicSam();
-            this.resetInteractionMode();
+            if (this.loadingMagicSam) {
+                Messages.danger('Could not load the image embedding.');
+                this.finishLoadingMagicSam();
+                this.resetInteractionMode();
+            }
         },
         initMagicSamInteraction() {
             magicSamInteraction = new MagicSamInteraction({
