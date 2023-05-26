@@ -9,6 +9,7 @@ import {Styles} from './import';
 
 let magicSamInteraction;
 let loadedImageId;
+let loadingImageId;
 
 /**
  * Mixin for the annotationCanvas component that contains logic for the Magic Sam interaction.
@@ -51,36 +52,70 @@ export default {
         toggleMagicSamInteraction(active) {
             if (!active) {
                 magicSamInteraction.setActive(false);
-            } else if (this.hasSelectedLabel) {
-                // TODO handle repeated clicks and switching of images while loading
-                if (loadedImageId === this.image.id) {
-                    magicSamInteraction.setActive(true);
-                } else {
-                    this.startLoadingMagicSam();
-                    ImageEmbeddingApi.save({id: this.image.id}, {})
-                        .then((response) => {
-                            if (response.body.url !== null) {
-                                this.handleSamEmbeddingAvailable(response.body);
-                            } else {
-                                this.loadingMagicSamTakesLong = true;
-                            }
-                        }, (response) => {
-                            this.resetInteractionMode();
-                            this.finishLoadingMagicSam();
-                            handleErrorResponse(response);
-                        });
-                }
-            } else {
+                return;
+            }
+
+            if (!this.hasSelectedLabel) {
                 this.requireSelectedLabel();
+                return;
+            }
+
+            if (loadedImageId === this.image.id) {
+                magicSamInteraction.setActive(true);
+                return;
+            }
+
+            if (this.loadingMagicSam) {
+                return;
+            }
+
+            loadingImageId = this.image.id;
+            this.startLoadingMagicSam();
+            ImageEmbeddingApi.save({id: this.image.id}, {})
+                .then(
+                    this.handleSamEmbeddingRequestSuccess,
+                    this.handleSamEmbeddingRequestFailure
+                );
+        },
+        handleSamEmbeddingRequestSuccess(response) {
+            if (this.image.id !== loadingImageId) {
+                return;
+            }
+
+            if (response.body.url !== null) {
+                this.handleSamEmbeddingAvailable(response.body);
+            } else {
+                // Wait for the Websockets event.
+                this.loadingMagicSamTakesLong = true;
             }
         },
+        handleSamEmbeddingRequestFailure(response) {
+            this.resetInteractionMode();
+            this.finishLoadingMagicSam();
+            handleErrorResponse(response);
+        },
         handleSamEmbeddingAvailable(event) {
-            if (this.loadingMagicSam) {
-                loadedImageId = this.image.id;
-                magicSamInteraction.once('warmup', this.finishLoadingMagicSam);
-                magicSamInteraction.updateEmbedding(this.image, event.url)
-                    .then(() => magicSamInteraction.setActive(true));
+            if (!this.loadingMagicSam) {
+                return;
             }
+
+            if (this.image.id !== loadingImageId) {
+                return;
+            }
+
+            if (loadedImageId === this.image.id) {
+                return;
+            }
+
+            loadedImageId = this.image.id;
+            magicSamInteraction.updateEmbedding(this.image, event.url)
+                .then(this.finishLoadingMagicSam)
+                .then(() => {
+                    // The user could have disabled the interaction while loading.
+                    if (this.isMagicSamming) {
+                        magicSamInteraction.setActive(true);
+                    }
+                });
         },
         handleSamEmbeddingFailed() {
             Messages.warning('Could not load the image embedding.');
@@ -100,6 +135,18 @@ export default {
             magicSamInteraction.on('drawend', this.handleNewFeature);
             magicSamInteraction.setActive(false);
             this.map.addInteraction(magicSamInteraction);
+        },
+    },
+    watch: {
+        image(image) {
+            if (this.loadingMagicSam && loadingImageId !== image.id) {
+                this.finishLoadingMagicSam();
+                this.resetInteractionMode();
+            }
+
+            if (this.isMagicSamming) {
+                this.resetInteractionMode();
+            }
         },
     },
     created() {

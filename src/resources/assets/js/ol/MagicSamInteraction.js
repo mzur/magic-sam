@@ -43,20 +43,30 @@ class MagicSamInteraction extends PointerInteraction {
 
         this.sketchStyle = options.style === undefined ? null : options.style;
 
+        this.MASK_INPUT_TENSOR = new Tensor(
+            "float32",
+            new Float32Array(256 * 256),
+            [1, 1, 256, 256]
+        );
+        this.HAS_MASK_INPUT_TENSOR = new Tensor("float32", [0]);
+        // Add in the extra label when only clicks and no box.
+        // The extra point is at (0, 0) with label -1.
+        this.POINT_LABELS_TENSOR = new Tensor("float32", new Float32Array([1.0, -1.0]), [1, 2]);
+
         this.model = null;
         this.embedding = null;
         this.imageSizeTensor = null;
         this.samSizeTensor = null;
         this.imageSamScale = null;
-        this.waitingForModelWarmup = false;
 
         // wasm needs to be present in the assets folder.
-        InferenceSession.create(options.onnxUrl, {executionProviders: ['wasm']})
+        this.initPromise = InferenceSession.create(options.onnxUrl, {
+                executionProviders: ['wasm']
+            })
             .then(response => this.model = response);
     }
 
     updateEmbedding(image, url) {
-        this.waitingForModelWarmup = true;
         this.imageSizeTensor = new Tensor("float32", [image.height, image.width]);
         this.imageSamScale = LONG_SIDE_LENGTH / Math.max(image.height, image.width);
         this.samSizeTensor = new Tensor("float32", [
@@ -66,10 +76,13 @@ class MagicSamInteraction extends PointerInteraction {
 
         let npy = new npyjs();
 
-        return npy.load(url)
-            .then((npArray) => {
+        // Maybe the model is not initialized at this point so we have to wait for that,
+        // too.
+        return Vue.Promise.all([npy.load(url), this.initPromise])
+            .then(([npArray, model]) => {
                 this.embedding = new Tensor("float32", npArray.data, npArray.shape);
-            });
+            })
+            .then(this._runModelWarmup.bind(this));
     }
 
     /**
@@ -95,101 +108,23 @@ class MagicSamInteraction extends PointerInteraction {
      */
     handleMoveEvent(e) {
         if (!this.model) {
-            // Model initialization could take longer than everything else. The move
-            // event will be called repeatedly, so we can just exit here until the model
-            // is available.
             return;
         }
 
-        let pointCoords = new Float32Array(4);
-        let pointLabels = new Float32Array(2);
         let [height, ] = this.imageSizeTensor.data;
-        let [samHeight, samWidth] = this.samSizeTensor.data;
+        let pointCoords = new Float32Array([
+            e.coordinate[0] * this.imageSamScale,
+            (height - e.coordinate[1]) * this.imageSamScale,
+            // Add in the extra point when only clicks and no box.
+            // The extra point is at (0, 0) with label -1.
+            0,
+            0,
+        ]);
 
-        pointCoords[0] = e.coordinate[0] * this.imageSamScale;                // x
-        pointCoords[1] = (height - e.coordinate[1]) * this.imageSamScale;     // y
-        pointLabels[0] = 1;
-
-        // Add in the extra point/label when only clicks and no box
-        // The extra point is at (0, 0) with label -1
-        pointCoords[2] = 0.0;
-        pointCoords[3] = 0.0;
-        pointLabels[1] = -1.0;
-
-        // Create the tensor
         let pointCoordsTensor = new Tensor("float32", pointCoords, [1, 2, 2]);
-        let pointLabelsTensor = new Tensor("float32", pointLabels, [1, 2]);
+        const feeds = this._getFeeds(pointCoordsTensor);
 
-        // There is no previous mask, so default to 0
-        const maskInput = new Tensor(
-            "float32",
-            new Float32Array(256 * 256),
-            [1, 1, 256, 256]
-        );
-        const hasMaskInput = new Tensor("float32", [0]);
-
-        const feeds = {
-            image_embeddings: this.embedding,
-            point_coords: pointCoordsTensor,
-            point_labels: pointLabelsTensor,
-            // Compute the mask on the downscaled size to make inference and tracing
-            // faster. We scale the tracing result to the original size later.
-            orig_im_size: this.samSizeTensor,
-            mask_input: maskInput,
-            has_mask_input: hasMaskInput,
-        }
-
-        this.model.run(feeds).then((results) => {
-            if (this.waitingForModelWarmup) {
-                this.dispatchEvent({type: 'warmup'});
-                this.waitingForModelWarmup = false;
-            }
-
-            const output = results[this.model.outputNames[0]];
-
-            const thresholdedOutput = output.data.map(pixel => pixel > 0 ? 1 : 0);
-
-            let imageData = {
-                data: new Uint8Array(thresholdedOutput),
-                width: samWidth,
-                height: samHeight,
-                bounds: {
-                    minX: 0,
-                    maxX: samWidth,
-                    minY: 0,
-                    maxY: samHeight
-                },
-            };
-
-            let contour = MagicWand.traceContours(imageData)
-                .filter(function (c) {
-                    return !c.innner;
-                })
-                .shift();
-
-            if (contour) {
-                if (this.simplifyTolerant > 0) {
-                    contour = MagicWand.simplifyContours([contour], this.simplifyTolerant, this.simplifyCount).shift();
-                }
-            }
-
-            let points = contour.points.map(point => [point.x, point.y])
-                // Scale up to original size.
-                .map(([x, y]) => [x / this.imageSamScale, y / this.imageSamScale])
-                // Invert y axis for OpenLayers coordinates.
-                .map(([x, y]) => [x, height - y]);
-
-            if (this.sketchFeature) {
-                this.sketchFeature.getGeometry().setCoordinates([points]);
-            } else {
-                this.sketchFeature = new Feature(new Polygon([points]));
-                if (this.sketchStyle) {
-                    this.sketchFeature.setStyle(this.sketchStyle);
-                }
-                this.sketchSource.addFeature(this.sketchFeature);
-
-            }
-        });
+        this.model.run(feeds).then(this._processInferenceResult.bind(this));
     }
 
     /**
@@ -199,6 +134,76 @@ class MagicSamInteraction extends PointerInteraction {
         if (!this.getActive() && this.sketchFeature) {
             this.sketchSource.removeFeature(this.sketchFeature);
             this.sketchFeature = null;
+        }
+    }
+
+    _getFeeds(pointCoordsTensor) {
+        return {
+            image_embeddings: this.embedding,
+            point_coords: pointCoordsTensor,
+            point_labels: this.POINT_LABELS_TENSOR,
+            // Compute the mask on the downscaled size to make inference and tracing
+            // faster. We scale the tracing result to the original size later.
+            orig_im_size: this.samSizeTensor,
+            mask_input: this.MASK_INPUT_TENSOR,
+            has_mask_input: this.HAS_MASK_INPUT_TENSOR,
+        };
+    }
+
+    _runModelWarmup() {
+        // Run the model once for "warmup". After that, the interactions is
+        // considered ready.
+        let pointCoordsTensor = new Tensor("float32", [0, 0, 0, 0], [1, 2, 2]);
+        const feeds = this._getFeeds(pointCoordsTensor);
+
+        return this.model.run(feeds);
+    }
+
+    _processInferenceResult(results) {
+        let [height, ] = this.imageSizeTensor.data;
+        let [samHeight, samWidth] = this.samSizeTensor.data;
+
+        const output = results[this.model.outputNames[0]];
+
+        const thresholdedOutput = output.data.map(pixel => pixel > 0 ? 1 : 0);
+
+        let imageData = {
+            data: new Uint8Array(thresholdedOutput),
+            width: samWidth,
+            height: samHeight,
+            bounds: {
+                minX: 0,
+                maxX: samWidth,
+                minY: 0,
+                maxY: samHeight
+            },
+        };
+
+        let contour = MagicWand.traceContours(imageData)
+            .filter(function (c) {
+                return !c.innner;
+            })
+            .shift();
+
+        if (this.simplifyTolerant > 0) {
+            contour = MagicWand.simplifyContours([contour], this.simplifyTolerant, this.simplifyCount).shift();
+        }
+
+        let points = contour.points.map(point => [point.x, point.y])
+            // Scale up to original size.
+            .map(([x, y]) => [x / this.imageSamScale, y / this.imageSamScale])
+            // Invert y axis for OpenLayers coordinates.
+            .map(([x, y]) => [x, height - y]);
+
+        if (this.sketchFeature) {
+            this.sketchFeature.getGeometry().setCoordinates([points]);
+        } else {
+            this.sketchFeature = new Feature(new Polygon([points]));
+            if (this.sketchStyle) {
+                this.sketchFeature.setStyle(this.sketchStyle);
+            }
+            this.sketchSource.addFeature(this.sketchFeature);
+
         }
     }
 
