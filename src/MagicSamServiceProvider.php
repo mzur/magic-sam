@@ -32,6 +32,7 @@ class MagicSamServiceProvider extends ServiceProvider
         $modules->register('magic-sam', [
             'viewMixins' => [
                 'imageAnnotationPolygonTools',
+                'manualCreatingPolygons',
             ],
             'controllerMixins' => [
                 //
