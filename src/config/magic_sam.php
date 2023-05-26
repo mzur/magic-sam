@@ -88,7 +88,7 @@ return [
     /*
      | Specifies which queue should be used for the broadcast events.
      */
-    'broadcast_queue' => env('MAGIC_SAM_BORADCAST_QUEUE', 'default'),
+    'broadcast_queue' => env('MAGIC_SAM_BROADCAST_QUEUE', 'default'),
 
     /*
      | Specifies the time in days after which an image embedding file will be deleted
