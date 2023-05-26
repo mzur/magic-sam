@@ -2,7 +2,9 @@
 
 namespace Biigle\Modules\MagicSam;
 
+use Biigle\Modules\MagicSam\Console\Commands\PruneOldEmbeddings;
 use Biigle\Services\Modules;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 
@@ -35,13 +37,26 @@ class MagicSamServiceProvider extends ServiceProvider
                 //
             ],
             'apidoc' => [
-               //__DIR__.'/Http/Controllers/Api/',
+               __DIR__.'/Http/Controllers/',
             ],
         ]);
 
         $this->publishes([
             __DIR__.'/public/assets' => public_path('vendor/magic-sam'),
         ], 'public');
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                PruneOldEmbeddings::class,
+            ]);
+
+            $this->app->booted(function () {
+                $schedule = app(Schedule::class);
+                $schedule->command(PruneOldEmbeddings::class)
+                    ->daily()
+                    ->onOneServer();
+            });
+        }
     }
 
     /**

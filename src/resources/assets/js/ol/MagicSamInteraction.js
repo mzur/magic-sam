@@ -199,9 +199,7 @@ class MagicSamInteraction extends PointerInteraction {
         };
 
         let contour = MagicWand.traceContours(imageData)
-            .filter(function (c) {
-                return !c.innner;
-            })
+            .filter(c => !c.inner)
             .shift();
 
         if (this.simplifyTolerant > 0) {

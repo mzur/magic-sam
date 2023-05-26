@@ -85,4 +85,10 @@ return [
      */
     'broadcast_queue' => env('MAGIC_SAM_BORADCAST_QUEUE', 'default'),
 
+    /*
+     | Specifies the time in days after which an image embedding file will be deleted
+     | again.
+     */
+    'prune_age_days' => env('MAGIC_SAM_PRUNE_AGE_DAYS', 30),
+
 ];
