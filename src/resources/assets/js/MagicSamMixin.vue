@@ -30,6 +30,13 @@ export default {
         magicSamButtonClass() {
             return this.loadingMagicSamTakesLong ? 'loading-magic-sam-long' : '';
         },
+        magicSamButtonTitle() {
+            if (this.loadingMagicSamTakesLong) {
+                return 'Preparing the magic for this image';
+            }
+
+            return 'Draw a polygon using the magic SAM tool 𝗭';
+        },
     },
     methods: {
         startLoadingMagicSam() {
