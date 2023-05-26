@@ -1,11 +1,12 @@
 import Feature from '@biigle/ol/Feature';
 import MagicWand from 'magic-wand-tool';
+import MapBrowserEventType from '@biigle/ol/MapBrowserEventType';
+import npyjs from "npyjs";
 import PointerInteraction from '@biigle/ol/interaction/Pointer';
 import Polygon from '@biigle/ol/geom/Polygon';
 import VectorLayer from '@biigle/ol/layer/Vector';
 import VectorSource from '@biigle/ol/source/Vector';
 import {InferenceSession, Tensor} from "onnxruntime-web";
-import npyjs from "npyjs";
 
 const LONG_SIDE_LENGTH = 1024;
 
@@ -58,6 +59,7 @@ class MagicSamInteraction extends PointerInteraction {
         this.imageSizeTensor = null;
         this.samSizeTensor = null;
         this.imageSamScale = null;
+        this.isDragging = false;
 
         // wasm needs to be present in the assets folder.
         this.initPromise = InferenceSession.create(options.onnxUrl, {
@@ -85,22 +87,28 @@ class MagicSamInteraction extends PointerInteraction {
             .then(this._runModelWarmup.bind(this));
     }
 
-    /**
-     * Finish drawing of a sketch.
-     */
     handleUpEvent() {
-        if (this.sketchFeature) {
+        // Do not fire the event if the user was previously dragging.
+        if (this.sketchFeature && !this.isDragging) {
             this.dispatchEvent({type: 'drawend', feature: this.sketchFeature});
         }
+
+        this.isDragging = false;
 
         return true;
     }
 
-    /**
-     * Start drawing of a sketch.
-     */
     handleDownEvent() {
         return true;
+    }
+
+    stopDown() {
+        // The down event must be propagated so the map can still be dragged.
+        return false;
+    }
+
+    handleDragEvent() {
+        this.isDragging = true;
     }
 
     /**
