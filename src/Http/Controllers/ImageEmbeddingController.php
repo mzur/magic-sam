@@ -46,10 +46,11 @@ class ImageEmbeddingController extends Controller
                 $url = $disk->url($filename);
             }
         } else {
-            Queue::pushOn(
-                config('magic_sam.request_queue'),
-                new GenerateEmbedding($image, $request->user())
-            );
+            Queue::connection(config('magic_sam.request_connection'))
+                ->pushOn(
+                    config('magic_sam.request_queue'),
+                    new GenerateEmbedding($image, $request->user())
+                );
         }
 
         return ['url' => $url];

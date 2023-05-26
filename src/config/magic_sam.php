@@ -12,6 +12,11 @@ return [
     'request_queue' => env('MAGIC_SAM_REQUEST_QUEUE', 'default'),
 
     /*
+    | Queue connection to submit new MAIA jobs to.
+    */
+    'request_connection' => env('MAGIC_SAM_REQUEST_CONNECTION', env('QUEUE_CONNECTION', env('QUEUE_DRIVER', 'sync'))),
+
+    /*
     | Path to the Python executable.
     */
     'python' => env('MAGIC_SAM_PYTHON', '/usr/bin/python3'),
