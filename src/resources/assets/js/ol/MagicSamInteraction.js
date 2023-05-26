@@ -1,6 +1,5 @@
 import Feature from '@biigle/ol/Feature';
 import MagicWand from 'magic-wand-tool';
-import MapBrowserEventType from '@biigle/ol/MapBrowserEventType';
 import npyjs from "npyjs";
 import PointerInteraction from '@biigle/ol/interaction/Pointer';
 import Polygon from '@biigle/ol/geom/Polygon';
@@ -82,10 +81,10 @@ class MagicSamInteraction extends PointerInteraction {
         // Maybe the model is not initialized at this point so we have to wait for that,
         // too.
         return Vue.Promise.all([npy.load(url), this.initPromise])
-            .then(([npArray, model]) => {
+            .then(([npArray, ]) => {
                 this.embedding = new Tensor("float32", npArray.data, npArray.shape);
-            })
-            .then(this._runModelWarmup.bind(this));
+                this._runModelWarmup();
+            });
     }
 
     handleUpEvent() {
@@ -175,6 +174,11 @@ class MagicSamInteraction extends PointerInteraction {
     }
 
     _processInferenceResult(results) {
+        // Discard this result if the interaction was disabled in the meantime.
+        if (!this.getActive()) {
+            return;
+        }
+
         let [height, ] = this.imageSizeTensor.data;
         let [samHeight, samWidth] = this.samSizeTensor.data;
 
