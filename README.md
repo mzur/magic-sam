@@ -19,6 +19,24 @@ This is a BIIGLE module that offers the Magic SAM image annotation instrument.
     ```
     This requires the link `storage -> ../storage/app/public` in the `public` directory.
 
+## Configuration
+
+Image embeddings are computed in jobs submitted to the `default` on the CPU. They require a queue worker Docker container that satisfies the Python [requirements](requirements.txt) of this repository. Embeddings can be computed much faster on a GPU. You can cnfigure the queue name with the `MAGIC_SAM_REQUEST_QUEUE` and the device (`cpu` or `gpu`) with the `MAGIC_SAM_DEVICE` environment variables.
+
+Image embedding files are automatically deleted after 30 days. You can configure this with the `MAGIC_SAM_PRUNE_AGE_DAYS` environment variable.
+
+## References
+
+Reference publications that you should cite if you use Magic SAM for one of your studies.
+
+- **BIIGLE 2.0**
+    [Langenkämper, D., Zurowietz, M., Schoening, T., & Nattkemper, T. W. (2017). Biigle 2.0-browsing and annotating large marine image collections.](https://doi.org/10.3389/fmars.2017.00083)
+    Frontiers in Marine Science, 4, 83. doi: `10.3389/fmars.2017.00083`
+
+- **Segment Anything**
+    [Kirillov, A., Mintun, E., Ravi, N., Mao, H., Rolland, C., Gustafson, L., Xiao, T., Whitehead, S., Berg, A.C., Lo, W.Y. and Dollár, P., (2023). Segment anything.](https://doi.org/10.48550/arXiv.2304.02643)
+    arXiv preprint arXiv:2304.02643. doi: `10.48550/arXiv.2304.02643`
+
 ## Developing
 
 Take a look at the [development guide](https://github.com/biigle/core/blob/master/DEVELOPING.md) of the core repository to get started with the development setup.

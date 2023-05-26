@@ -26,7 +26,7 @@ return [
     |
     | Devices: cpu, gpu
     */
-    'device' => env('MAGIC_SAM_DEVICE', 'gpu'),
+    'device' => env('MAGIC_SAM_DEVICE', 'cpu'),
 
     /*
     | URL from which to download the model checkpoint.
