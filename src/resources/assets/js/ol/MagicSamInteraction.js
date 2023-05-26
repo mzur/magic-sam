@@ -132,7 +132,9 @@ class MagicSamInteraction extends PointerInteraction {
      */
     toggleActive() {
         if (!this.getActive() && this.sketchFeature) {
-            this.sketchSource.removeFeature(this.sketchFeature);
+            if (this.sketchSource.hasFeature(this.sketchFeature)) {
+                this.sketchSource.removeFeature(this.sketchFeature);
+            }
             this.sketchFeature = null;
         }
     }
@@ -202,8 +204,12 @@ class MagicSamInteraction extends PointerInteraction {
             if (this.sketchStyle) {
                 this.sketchFeature.setStyle(this.sketchStyle);
             }
-            this.sketchSource.addFeature(this.sketchFeature);
+        }
 
+        // This happens if the sketch feature was newly created (above) or if an annotation
+        // was created from the feature (which may also remove the sketch from its source).
+        if (!this.sketchSource.hasFeature(this.sketchFeature)) {
+            this.sketchSource.addFeature(this.sketchFeature);
         }
     }
 

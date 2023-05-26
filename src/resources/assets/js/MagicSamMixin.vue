@@ -51,7 +51,7 @@ export default {
                 this.resetInteractionMode();
             } else if (this.canAdd && !this.image.tiled) {
                 if (!magicSamInteraction) {
-                    this.initSamInteraction();
+                    this.initMagicSamInteraction();
                 }
                 this.interactionMode = 'magicSam';
             }
@@ -129,7 +129,7 @@ export default {
             this.finishLoadingMagicSam();
             this.resetInteractionMode();
         },
-        initSamInteraction() {
+        initMagicSamInteraction() {
             magicSamInteraction = new MagicSamInteraction({
                 map: this.map,
                 source: this.annotationSource,
@@ -159,8 +159,6 @@ export default {
     created() {
         if (this.canAdd) {
             Keyboard.on('z', this.toggleMagicSam, 0, this.listenerSet);
-            // this.$watch('image', this.maybeUpdateMagicSamSnapshot);
-            // this.$watch('image', this.maybeSetMagicSamLayer);
             this.$watch('isMagicSamming', this.toggleMagicSamInteraction);
 
             Echo.getInstance().private(`user-${this.userId}`)
