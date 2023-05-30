@@ -33,6 +33,7 @@ class MagicSamServiceProvider extends ServiceProvider
             'viewMixins' => [
                 'imageAnnotationPolygonTools',
                 'manualCreatingPolygons',
+                'manualAnnotationShortcutsPolygon',
             ],
             'controllerMixins' => [
                 //
