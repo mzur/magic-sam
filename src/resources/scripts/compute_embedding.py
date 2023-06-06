@@ -21,6 +21,12 @@ transform = ResizeLongestSide(sam.image_encoder.img_size)
 
 image = Image.open(in_path)
 
+if image.mode == 'RGBA':
+    image = image.convert('RGB')
+
+if image.mode != 'RGB':
+    raise ValueError(f'Only RGB images supported, was {image.mode}')
+
 with torch.no_grad():
     input_image = transform.apply_image(np.array(image))
     input_image_torch = torch.as_tensor(input_image, device=device)
