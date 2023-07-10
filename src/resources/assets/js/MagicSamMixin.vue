@@ -56,34 +56,6 @@ export default {
                 this.interactionMode = 'magicSam';
             }
         },
-        toggleMagicSamInteraction(active) {
-            if (!active) {
-                magicSamInteraction.setActive(false);
-                return;
-            }
-
-            if (!this.hasSelectedLabel) {
-                this.requireSelectedLabel();
-                return;
-            }
-
-            if (loadedImageId === this.image.id) {
-                magicSamInteraction.setActive(true);
-                return;
-            }
-
-            if (this.loadingMagicSam) {
-                return;
-            }
-
-            loadingImageId = this.image.id;
-            this.startLoadingMagicSam();
-            ImageEmbeddingApi.save({id: this.image.id}, {})
-                .then(
-                    this.handleSamEmbeddingRequestSuccess,
-                    this.handleSamEmbeddingRequestFailure
-                );
-        },
         handleSamEmbeddingRequestSuccess(response) {
             if (this.image.id !== loadingImageId) {
                 return;
@@ -157,16 +129,49 @@ export default {
                 this.resetInteractionMode();
             }
         },
+        isMagicSamming(active) {
+            if (!active) {
+                magicSamInteraction.setActive(false);
+                return;
+            }
+
+            if (!this.hasSelectedLabel) {
+                this.requireSelectedLabel();
+                return;
+            }
+
+            if (loadedImageId === this.image.id) {
+                magicSamInteraction.setActive(true);
+                return;
+            }
+
+            if (this.loadingMagicSam) {
+                return;
+            }
+
+            loadingImageId = this.image.id;
+            this.startLoadingMagicSam();
+            ImageEmbeddingApi.save({id: this.image.id}, {})
+                .then(
+                    this.handleSamEmbeddingRequestSuccess,
+                    this.handleSamEmbeddingRequestFailure
+                );
+        },
+        canAdd: {
+            handler(canAdd) {
+                if (canAdd) {
+                    Keyboard.on('z', this.toggleMagicSam, 0, this.listenerSet);
+                } else {
+                    Keyboard.off('z', this.toggleMagicSam, 0, this.listenerSet);
+                }
+            },
+            immediate: true,
+        },
     },
     created() {
-        if (this.canAdd) {
-            Keyboard.on('z', this.toggleMagicSam, 0, this.listenerSet);
-            this.$watch('isMagicSamming', this.toggleMagicSamInteraction);
-
-            Echo.getInstance().private(`user-${this.userId}`)
-                .listen('.Biigle\\Modules\\MagicSam\\Events\\EmbeddingAvailable', this.handleSamEmbeddingAvailable)
-                .listen('.Biigle\\Modules\\MagicSam\\Events\\EmbeddingFailed', this.handleSamEmbeddingFailed);
-        }
+        Echo.getInstance().private(`user-${this.userId}`)
+            .listen('.Biigle\\Modules\\MagicSam\\Events\\EmbeddingAvailable', this.handleSamEmbeddingAvailable)
+            .listen('.Biigle\\Modules\\MagicSam\\Events\\EmbeddingFailed', this.handleSamEmbeddingFailed);
     },
 };
 </script>
