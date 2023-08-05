@@ -87,7 +87,7 @@ export default {
             }
 
             loadedImageId = this.image.id;
-            magicSamInteraction.updateEmbedding(this.image, event.url)
+            magicSamInteraction.updateEmbedding(this.image, event)
                 .then(this.finishLoadingMagicSam)
                 .then(() => {
                     // The user could have disabled the interaction while loading.
@@ -151,11 +151,26 @@ export default {
 
             loadingImageId = this.image.id;
             this.startLoadingMagicSam();
-            ImageEmbeddingApi.save({id: this.image.id}, {})
-                .then(
-                    this.handleSamEmbeddingRequestSuccess,
-                    this.handleSamEmbeddingRequestFailure
-                );
+            // request the image embedding from torchserve using fetch api
+            fetch("http://localhost:8080/predictions/SAM/1.0", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    img_id: this.image.id,
+                }),
+            })
+            .then((response) => {
+                // Check if the response status is successful
+                if (!response.ok) {
+                throw new Error('Network response was not ok');
+                }
+                // Parse the JSON response
+                return response.json();
+            })
+            .then(this.handleSamEmbeddingAvailable)
+            .catch(this.handleSamEmbeddingRequestFailure)
         },
         canAdd: {
             handler(canAdd) {
@@ -167,11 +182,6 @@ export default {
             },
             immediate: true,
         },
-    },
-    created() {
-        Echo.getInstance().private(`user-${this.userId}`)
-            .listen('.Biigle\\Modules\\MagicSam\\Events\\EmbeddingAvailable', this.handleSamEmbeddingAvailable)
-            .listen('.Biigle\\Modules\\MagicSam\\Events\\EmbeddingFailed', this.handleSamEmbeddingFailed);
     },
 };
 </script>
