@@ -21,6 +21,9 @@ class MagicSamInteraction extends PointerInteraction {
         // The image layer to use as source for the magic wand tool.
         this.layer = options.layer;
 
+        //create a multimap layer selector
+        this.mmlayer=0;
+
         // Value to adjust simplification of the sketch polygon. Higher values result in
         // less vertices of the polygon. Set to 0 to disable simplification.
         this.simplifyTolerant = options.simplifyTolerant === undefined ? 0 :
@@ -134,9 +137,6 @@ class MagicSamInteraction extends PointerInteraction {
             let pointCoordsTensor = new Tensor("float32", pointCoords, [1, 2, 2]);
             const feeds = this._getFeeds(pointCoordsTensor);
 
-            this.model.run(feeds).then(this._processInferenceResult.bind(this));
-        }, 1000, 'magic-sam-move');
-
     }
 
     /**
@@ -173,7 +173,15 @@ class MagicSamInteraction extends PointerInteraction {
         return this.model.run(feeds);
     }
 
-    _processInferenceResult(results) {
+    increaseLayer(){
+        this.mmlayer++;
+        this.mmlayer%=4;
+        this._processInferenceResult(this.pc,this.results);
+    }
+
+    _processInferenceResult(pc, results) {
+        this.results = results;
+        this.pc=pc;
         // Discard this result if the interaction was disabled in the meantime.
         if (!this.getActive()) {
             return;
@@ -182,9 +190,10 @@ class MagicSamInteraction extends PointerInteraction {
         let [height, ] = this.imageSizeTensor.data;
         let [samHeight, samWidth] = this.samSizeTensor.data;
 
-        const output = results[this.model.outputNames[0]];
-
-        const thresholdedOutput = output.data.map(pixel => pixel > 0 ? 1 : 0);
+        // const output = results[this.model.outputNames[0]];
+        const output = new Float32Array(results[this.model.outputNames[0]].data.buffer,this.mmlayer*4*samWidth*samHeight, samWidth*samHeight);
+        
+        const thresholdedOutput = output.map(pixel => pixel > 0 ? 1 : 0);
 
         let imageData = {
             data: new Uint8Array(thresholdedOutput),
@@ -201,6 +210,10 @@ class MagicSamInteraction extends PointerInteraction {
         let contour = MagicWand.traceContours(imageData)
             .filter(c => !c.inner)
             .shift();
+
+        if(!contour){
+            return;
+        }
 
         if (this.simplifyTolerant > 0) {
             contour = MagicWand.simplifyContours([contour], this.simplifyTolerant, this.simplifyCount).shift();

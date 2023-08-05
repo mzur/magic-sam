@@ -46,6 +46,9 @@ export default {
             this.loadingMagicSam = false;
             this.loadingMagicSamTakesLong = false;
         },
+        increaseLayer(){
+            magicSamInteraction.increaseLayer();
+        },
         toggleMagicSam() {
             if (this.isMagicSamming) {
                 this.resetInteractionMode();
@@ -161,6 +164,7 @@ export default {
             handler(canAdd) {
                 if (canAdd) {
                     Keyboard.on('z', this.toggleMagicSam, 0, this.listenerSet);
+                    Keyboard.on('n', this.increaseLayer, 0, this.listenerSet);
                 } else {
                     Keyboard.off('z', this.toggleMagicSam, 0, this.listenerSet);
                 }
