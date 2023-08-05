@@ -166,6 +166,8 @@ class MagicSamInteraction extends PointerInteraction {
 
             let pointCoordsTensor = new Tensor("float32", pointCoords, [1, 2, 2]);
             const feeds = this._getFeeds(pointCoordsTensor);
+            this.model.run(feeds).then(this._processInferenceResult.bind(this,pointCoords));
+        }, 25, 'magic-sam-move');
 
     }
 
