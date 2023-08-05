@@ -10,6 +10,36 @@ import {throttle} from '../import';
 
 const LONG_SIDE_LENGTH = 1024;
 
+  function isPointInsideContour(contour, px, py) {
+    // Create a winding number algorithm to check if point is inside the contour
+    // Here we assume contour is an array of points, and each point has "x" and "y" properties
+    let wn = 0;
+    const points = contour.points;
+    const numPoints = points.length;
+  
+    for (let i = 0; i < numPoints; i++) {
+      const p1 = points[i];
+      const p2 = points[(i + 1) % numPoints];
+  
+      if (p1.y <= py) {
+        if (p2.y > py && isLeft(p1, p2, { x: px, y: py }) > 0) {
+          wn++;
+        }
+      } else {
+        if (p2.y <= py && isLeft(p1, p2, { x: px, y: py }) < 0) {
+          wn--;
+        }
+      }
+    }
+  
+    return wn !== 0;
+  }
+  
+  function isLeft(p0, p1, p2) {
+    return (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y);
+  }
+  
+
 /**
  * Control for drawing polygons using the Segment Anything Model (SAM).
  */
@@ -209,6 +239,7 @@ class MagicSamInteraction extends PointerInteraction {
 
         let contour = MagicWand.traceContours(imageData)
             .filter(c => !c.inner)
+            .filter(c => isPointInsideContour(c, pc[0], pc[1]))
             .shift();
 
         if(!contour){
