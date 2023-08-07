@@ -39,6 +39,12 @@ export default {
         },
     },
     methods: {
+        set_throttleInterval(interval){
+            this.throttleInterval = interval;
+            if (magicSamInteraction) {
+                magicSamInteraction.throttleInterval=interval;
+            }
+        },
         startLoadingMagicSam() {
             this.loadingMagicSam = true;
         },
@@ -112,6 +118,7 @@ export default {
                 indicatorCrossStyle: Styles.cross,
                 onnxUrl: biigle.$require('magic-sam.onnx-url'),
                 simplifyTolerant: 0.1,
+                throttleInterval: this.throttleInterval,
             });
             magicSamInteraction.on('drawend', this.handleNewFeature);
             magicSamInteraction.setActive(false);
