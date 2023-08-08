@@ -30,7 +30,7 @@ class MagicSamInteraction extends PointerInteraction {
             options.simplifyCount;
 
         this.map = options.map;
-        this.throttleInterval=options.throttleInterval;
+        this.throttleInterval = options.throttleInterval;
 
         this.sketchFeature = null;
         this.sketchSource = options.source;
