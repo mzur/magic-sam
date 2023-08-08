@@ -19,12 +19,13 @@ export default {
     },
     watch: {
         SAMthrottleInterval(interval){
+            interval = parseFloat(interval);
             Events.$emit('settings.SAMthrottleInterval', interval);
             this.settings.set('SAMthrottleInterval', interval);
         },
     },
     created() { 
-        if(this.settings.has('SAMthrottleInterval')){
+        if (this.settings.has('SAMthrottleInterval')) {
             this.SAMthrottleInterval = this.settings.get('SAMthrottleInterval');
         }
     }
