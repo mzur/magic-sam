@@ -14,9 +14,6 @@ export default {
     },
     data() {
         return {
-            restoreKeys: [
-                'SAMthrottleInterval',
-            ],
             'SAMthrottleInterval': 1000,
         };
     },
