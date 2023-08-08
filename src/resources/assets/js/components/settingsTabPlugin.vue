@@ -17,7 +17,7 @@ export default {
             restoreKeys: [
                 'SAMthrottleInterval',
             ],
-            'SAMthrottleInterval':1000,
+            'SAMthrottleInterval': 1000,
         };
     },
     watch: {
