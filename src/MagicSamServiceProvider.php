@@ -31,10 +31,11 @@ class MagicSamServiceProvider extends ServiceProvider
 
         $modules->register('magic-sam', [
             'viewMixins' => [
+                'annotationsManualSidebarSettings',
                 'annotationsSettingsTab',
                 'imageAnnotationPolygonTools',
-                'manualCreatingPolygons',
                 'manualAnnotationShortcutsPolygon',
+                'manualCreatingPolygons',
             ],
             'controllerMixins' => [
                 //

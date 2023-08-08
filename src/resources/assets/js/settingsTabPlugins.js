@@ -7,5 +7,5 @@ import {SettingsTabPlugins} from './import';
  * @type {Object}
  */
 if (SettingsTabPlugins) {
-    SettingsTabPlugins.magicsam = Plugin;
+    SettingsTabPlugins.magicSam = Plugin;
 }

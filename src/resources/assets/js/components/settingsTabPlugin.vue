@@ -14,20 +14,27 @@ export default {
     },
     data() {
         return {
-            'SAMthrottleInterval': 1000,
+            steps: [2000, 1000, 500, 200, 100],
+            stepNames: ['slower', 'slow', 'medium', 'fast', 'faster'],
+            stepIndex: 2,
         };
     },
-    watch: {
-        SAMthrottleInterval(interval){
-            interval = parseFloat(interval);
-            Events.$emit('settings.SAMthrottleInterval', interval);
-            this.settings.set('SAMthrottleInterval', interval);
+    computed: {
+        stepName() {
+            return this.stepNames[this.stepIndex];
         },
     },
-    created() { 
-        if (this.settings.has('SAMthrottleInterval')) {
-            this.SAMthrottleInterval = this.settings.get('SAMthrottleInterval');
+    watch: {
+        stepIndex(index) {
+            let interval = this.steps[index];
+            Events.$emit('settings.samThrottleInterval', interval);
+            this.settings.set('samRefreshRateStep', index);
+        },
+    },
+    created() {
+        if (this.settings.has('samRefreshRateStep')) {
+            this.stepIndex = this.settings.get('samRefreshRateStep');
         }
-    }
+    },
 };
 </script>
