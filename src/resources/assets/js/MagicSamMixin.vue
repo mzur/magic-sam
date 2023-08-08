@@ -39,7 +39,7 @@ export default {
         },
     },
     methods: {
-        set_throttleInterval(interval){
+        setThrottleInterval(interval) {
             this.throttleInterval = interval;
             if (magicSamInteraction) {
                 magicSamInteraction.throttleInterval=interval;
