@@ -1,5 +1,5 @@
 <script>
-import MagicSamMixin from '../MagicSamMixin.vue';
+import {Events} from '../import';
 /**
  * The plugin component to edit the Magic-SAM throttle interval.
  *
@@ -18,12 +18,15 @@ export default {
         };
     },
     watch: {
-        SAMthrottleInterval(interval) {
-            interval = parseFloat(interval);
-            this.$emit('change', 'SAMthrottleInterval', interval);
+        SAMthrottleInterval(interval){
+            Events.$emit('settings.SAMthrottleInterval', interval);
             this.settings.set('SAMthrottleInterval', interval);
-            MagicSamMixin.methods.set_throttleInterval(interval);
         },
     },
+    created() { 
+        if(this.settings.has('SAMthrottleInterval')){
+            this.SAMthrottleInterval = this.settings.get('SAMthrottleInterval');
+        }
+    }
 };
 </script>

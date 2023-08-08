@@ -69,6 +69,14 @@ class MagicSamInteraction extends PointerInteraction {
             .then(response => this.model = response);
     }
 
+    setThrottleInterval(value) {
+        this.throttleInterval = value;
+    }
+
+    getThrottleInterval() {
+        return this.throttleInterval;
+    }
+
     updateEmbedding(image, url) {
         this.imageSizeTensor = new Tensor("float32", [image.height, image.width]);
         this.imageSamScale = LONG_SIDE_LENGTH / Math.max(image.height, image.width);

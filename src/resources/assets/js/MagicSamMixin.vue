@@ -6,6 +6,7 @@ import {handleErrorResponse} from './import';
 import {Keyboard} from './import';
 import {Messages} from './import';
 import {Styles} from './import';
+import {Events} from './import';
 
 let magicSamInteraction;
 let loadedImageId;
@@ -21,6 +22,7 @@ export default {
         return {
             loadingMagicSam: false,
             loadingMagicSamTakesLong: false,
+            throttleInterval: 1000,
         };
     },
     computed: {
@@ -42,7 +44,7 @@ export default {
         setThrottleInterval(interval) {
             this.throttleInterval = interval;
             if (magicSamInteraction) {
-                magicSamInteraction.throttleInterval=interval;
+                magicSamInteraction.setThrottleInterval(interval);
             }
         },
         startLoadingMagicSam() {
@@ -176,6 +178,7 @@ export default {
         },
     },
     created() {
+        Events.$on('settings.SAMthrottleInterval', this.setThrottleInterval);
         Echo.getInstance().private(`user-${this.userId}`)
             .listen('.Biigle\\Modules\\MagicSam\\Events\\EmbeddingAvailable', this.handleSamEmbeddingAvailable)
             .listen('.Biigle\\Modules\\MagicSam\\Events\\EmbeddingFailed', this.handleSamEmbeddingFailed);
