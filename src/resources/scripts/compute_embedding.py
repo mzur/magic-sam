@@ -24,6 +24,9 @@ image = Image.open(in_path)
 if image.mode == 'RGBA':
     image = image.convert('RGB')
 
+if image.mode == 'L':
+    image = image.convert('RGB')
+
 if image.mode != 'RGB':
     raise ValueError(f'Only RGB images supported, was {image.mode}')
 
