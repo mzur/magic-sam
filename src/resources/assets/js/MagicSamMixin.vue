@@ -6,6 +6,7 @@ import {handleErrorResponse} from './import';
 import {Keyboard} from './import';
 import {Messages} from './import';
 import {Styles} from './import';
+import {Events} from './import';
 
 let magicSamInteraction;
 let loadedImageId;
@@ -21,6 +22,7 @@ export default {
         return {
             loadingMagicSam: false,
             loadingMagicSamTakesLong: false,
+            throttleInterval: 1000,
         };
     },
     computed: {
@@ -39,6 +41,12 @@ export default {
         },
     },
     methods: {
+        setThrottleInterval(interval) {
+            this.throttleInterval = interval;
+            if (magicSamInteraction) {
+                magicSamInteraction.setThrottleInterval(interval);
+            }
+        },
         startLoadingMagicSam() {
             this.loadingMagicSam = true;
         },
@@ -112,6 +120,7 @@ export default {
                 indicatorCrossStyle: Styles.cross,
                 onnxUrl: biigle.$require('magic-sam.onnx-url'),
                 simplifyTolerant: 0.1,
+                throttleInterval: this.throttleInterval,
             });
             magicSamInteraction.on('drawend', this.handleNewFeature);
             magicSamInteraction.setActive(false);
@@ -169,6 +178,7 @@ export default {
         },
     },
     created() {
+        Events.$on('settings.samThrottleInterval', this.setThrottleInterval);
         Echo.getInstance().private(`user-${this.userId}`)
             .listen('.Biigle\\Modules\\MagicSam\\Events\\EmbeddingAvailable', this.handleSamEmbeddingAvailable)
             .listen('.Biigle\\Modules\\MagicSam\\Events\\EmbeddingFailed', this.handleSamEmbeddingFailed);

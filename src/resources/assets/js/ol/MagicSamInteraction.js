@@ -30,6 +30,7 @@ class MagicSamInteraction extends PointerInteraction {
             options.simplifyCount;
 
         this.map = options.map;
+        this.throttleInterval = options.throttleInterval || 1000;
 
         this.sketchFeature = null;
         this.sketchSource = options.source;
@@ -66,6 +67,14 @@ class MagicSamInteraction extends PointerInteraction {
                 executionProviders: ['wasm']
             })
             .then(response => this.model = response);
+    }
+
+    setThrottleInterval(value) {
+        this.throttleInterval = value;
+    }
+
+    getThrottleInterval() {
+        return this.throttleInterval;
     }
 
     updateEmbedding(image, url) {
@@ -135,7 +144,7 @@ class MagicSamInteraction extends PointerInteraction {
             const feeds = this._getFeeds(pointCoordsTensor);
 
             this.model.run(feeds).then(this._processInferenceResult.bind(this));
-        }, 1000, 'magic-sam-move');
+        }, this.throttleInterval, 'magic-sam-move');
 
     }
 
