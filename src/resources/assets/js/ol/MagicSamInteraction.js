@@ -173,7 +173,7 @@ class MagicSamInteraction extends PointerInteraction {
             let pointCoordsTensor = new Tensor("float32", pointCoords, [1, 2, 2]);
             const feeds = this._getFeeds(pointCoordsTensor);
 
-            this.model.run(feeds).then(this._processInferenceResult.bind(this));
+            this.model.run(feeds).then(this._processInferenceResult.bind(this,pointCoords));
         }, this.throttleInterval, 'magic-sam-move');
 
     }
@@ -212,7 +212,7 @@ class MagicSamInteraction extends PointerInteraction {
         return this.model.run(feeds);
     }
 
-    _processInferenceResult(results) {
+    _processInferenceResult(pointCoords, results) {
         // Discard this result if the interaction was disabled in the meantime.
         if (!this.getActive()) {
             return;
@@ -239,7 +239,7 @@ class MagicSamInteraction extends PointerInteraction {
 
         let contour = MagicWand.traceContours(imageData)
             .filter(c => !c.inner)
-            .filter(c => isPointInsideContour(c, pc[0], pc[1]))
+            .filter(c => isPointInsideContour(c, pointCoords[0], pointCoords[1]))
             .shift();
 
         if (this.simplifyTolerant > 0) {
