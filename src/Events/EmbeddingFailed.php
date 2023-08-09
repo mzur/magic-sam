@@ -44,7 +44,6 @@ class EmbeddingFailed implements ShouldBroadcastNow
      */
     public function __construct(User $user)
     {
-        $this->queue = config('magic_sam.broadcast_queue');
         $this->user = $user;
     }
 

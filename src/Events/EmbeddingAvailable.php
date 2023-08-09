@@ -52,7 +52,6 @@ class EmbeddingAvailable implements ShouldBroadcastNow
      */
     public function __construct($filename, User $user)
     {
-        $this->queue = config('magic_sam.broadcast_queue');
         $this->filename = $filename;
         $this->user = $user;
     }

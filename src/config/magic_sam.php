@@ -86,11 +86,6 @@ return [
     'model_path' => storage_path('magic_sam').'/sam_checkpoint.pth',
 
     /*
-     | Specifies which queue should be used for the broadcast events.
-     */
-    'broadcast_queue' => env('MAGIC_SAM_BROADCAST_QUEUE', 'default'),
-
-    /*
      | Specifies the time in days after which an image embedding file will be deleted
      | again.
      */
