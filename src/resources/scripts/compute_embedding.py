@@ -25,7 +25,7 @@ if image.mode == 'RGBA' or image.mode == 'L' or image.mode == 'P':
     image = image.convert('RGB')
 
 if image.mode =='I':
-    #I images need to be rescaled manually before converting
+    # I images (32 bit signed integer) need to be rescaled manually before converting.
     image = Image.fromarray(((np.array(img)/(2**16))*2**8).astype(np.uint8)).convert('RGB')
 
 if image.mode != 'RGB':
