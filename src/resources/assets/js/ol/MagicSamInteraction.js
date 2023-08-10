@@ -242,6 +242,10 @@ class MagicSamInteraction extends PointerInteraction {
             .filter(c => isPointInsideContour(c, pointCoords[0], pointCoords[1]))
             .shift();
 
+        if(!contour){
+            return;
+        }
+
         if (this.simplifyTolerant > 0) {
             contour = MagicWand.simplifyContours([contour], this.simplifyTolerant, this.simplifyCount).shift();
         }
