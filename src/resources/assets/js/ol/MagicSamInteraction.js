@@ -6,9 +6,17 @@ import Polygon from '@biigle/ol/geom/Polygon';
 import VectorLayer from '@biigle/ol/layer/Vector';
 import VectorSource from '@biigle/ol/source/Vector';
 import {InferenceSession, Tensor} from "onnxruntime-web";
+import {linearRingContainsXY} from '@biigle/ol/geom/flat/contains';
 import {throttle} from '../import';
 
 const LONG_SIDE_LENGTH = 1024;
+
+function contourContainsPoint(contour, point) {
+    let flatContour = contour.points.flatMap(p => [p.x, p.y]);
+    let [px, py] = point;
+
+    return linearRingContainsXY(flatContour, 0, flatContour.length, 2, px, py);
+}
 
 /**
  * Control for drawing polygons using the Segment Anything Model (SAM).
@@ -143,7 +151,7 @@ class MagicSamInteraction extends PointerInteraction {
             let pointCoordsTensor = new Tensor("float32", pointCoords, [1, 2, 2]);
             const feeds = this._getFeeds(pointCoordsTensor);
 
-            this.model.run(feeds).then(this._processInferenceResult.bind(this));
+            this.model.run(feeds).then(this._processInferenceResult.bind(this, pointCoords));
         }, this.throttleInterval, 'magic-sam-move');
 
     }
@@ -182,7 +190,7 @@ class MagicSamInteraction extends PointerInteraction {
         return this.model.run(feeds);
     }
 
-    _processInferenceResult(results) {
+    _processInferenceResult(pointCoords, results) {
         // Discard this result if the interaction was disabled in the meantime.
         if (!this.getActive()) {
             return;
@@ -209,7 +217,12 @@ class MagicSamInteraction extends PointerInteraction {
 
         let contour = MagicWand.traceContours(imageData)
             .filter(c => !c.inner)
+            .filter(c => contourContainsPoint(c, pointCoords))
             .shift();
+
+        if (!contour) {
+            return;
+        }
 
         if (this.simplifyTolerant > 0) {
             contour = MagicWand.simplifyContours([contour], this.simplifyTolerant, this.simplifyCount).shift();
