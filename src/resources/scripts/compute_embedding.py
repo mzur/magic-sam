@@ -23,10 +23,11 @@ image = Image.open(in_path)
 
 if image.mode == 'RGBA' or image.mode == 'L' or image.mode == 'P':
     image = image.convert('RGB')
-
-if image.mode =='I':
-    # I images (32 bit signed integer) need to be rescaled manually before converting.
-    image = Image.fromarray(((np.array(image)/(2**16))*2**8).astype(np.uint8)).convert('RGB')
+elif image.mode =='I' or image.mode == 'I;16':
+    # I images (32 bit signed integer) and I;16 (16 bit unsigned imteger)
+    # need to be rescaled manually before converting.
+    # image/256 === image/(2**16)*(2**8)
+    image = Image.fromarray((np.array(image)/256).astype(np.uint8)).convert('RGB')
 
 if image.mode != 'RGB':
     raise ValueError(f'Only RGB images supported, was {image.mode}')
