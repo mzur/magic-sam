@@ -5,7 +5,7 @@ import PointerInteraction from '@biigle/ol/interaction/Pointer';
 import Polygon from '@biigle/ol/geom/Polygon';
 import VectorLayer from '@biigle/ol/layer/Vector';
 import VectorSource from '@biigle/ol/source/Vector';
-import {InferenceSession, Tensor} from "onnxruntime-web";
+import {InferenceSession, Tensor} from "onnxruntime-web/webgpu";
 import {linearRingContainsXY} from '@biigle/ol/geom/flat/contains';
 import {throttle} from '../import';
 
@@ -72,7 +72,7 @@ class MagicSamInteraction extends PointerInteraction {
 
         // wasm needs to be present in the assets folder.
         this.initPromise = InferenceSession.create(options.onnxUrl, {
-                executionProviders: ['wasm']
+                executionProviders: ['webgpu']
             })
             .then(response => this.model = response);
     }

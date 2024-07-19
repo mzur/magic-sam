@@ -70,7 +70,7 @@ return [
     | See: https://github.com/biigle/core/issues/580#issuecomment-1562458609
     | See: https://onnxruntime.ai/docs/reference/compatibility.html#onnx-opset-support
     */
-    'onnx_file' => env('MAGIC_SAM_ONNX_FILE', 'sam_vit_h_4b8939.quantized.onnx'),
+    'onnx_file' => env('MAGIC_SAM_ONNX_FILE', 'sam_decoder.onnx'),
 
 
     /*
