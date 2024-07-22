@@ -13,6 +13,7 @@ use Illuminate\Http\File as HttpFile;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 
 class GenerateEmbedding
 {
@@ -59,7 +60,8 @@ class GenerateEmbedding
     public function handle()
     {
         $filename = "{$this->image->id}.npy";
-        $outputPath = sys_get_temp_dir()."/{$filename}";
+        // NOTE: This is currently hardcoded to be the shared /var/www/ filesystem for storing the embeddings before moving them to $disk
+        $outputPath = "/var/www"."/{$filename}";
         $disk = Storage::disk(config('magic_sam.embedding_storage_disk'));
         try {
             if (!$disk->exists($filename)) {
@@ -92,8 +94,13 @@ class GenerateEmbedding
             $modelType = config('magic_sam.model_type');
             $device = config('magic_sam.device');
             $script = config('magic_sam.compute_embedding_script');
+            // Contact the SAM worker (using the docker networking adress) to generate the embedding
+            $response = Http::post('http://samworker:8080/embedding', [
+                'in_path' => $path,
+                'out_path' => $outputPath,
+                'device' => $device,
+            ]);
 
-            $this->python("{$script} '{$checkpointPath}' '{$modelType}' '{$device}' '{$path}' '{$outputPath}'");
         });
     }
 
