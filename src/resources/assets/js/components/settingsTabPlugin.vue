@@ -24,11 +24,6 @@ export default {
             return this.stepNames[this.stepIndex];
         },
     },
-    methods: {
-        removeFocus(id) {
-            document.getElementById(id).blur();
-        }
-    },
     watch: {
         stepIndex(index) {
             let interval = this.steps[index];
