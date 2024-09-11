@@ -8,7 +8,6 @@ import VectorSource from '@biigle/ol/source/Vector';
 import {InferenceSession, Tensor} from "onnxruntime-web";
 import {linearRingContainsXY} from '@biigle/ol/geom/flat/contains';
 import {throttle} from '../import';
-import Style from '@biigle/ol/style/Style';
 
 const LONG_SIDE_LENGTH = 1024;
 
