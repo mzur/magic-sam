@@ -8,6 +8,7 @@ import VectorSource from '@biigle/ol/source/Vector';
 import {InferenceSession, Tensor} from "onnxruntime-web";
 import {linearRingContainsXY} from '@biigle/ol/geom/flat/contains';
 import {throttle} from '../import';
+import Style from '@biigle/ol/style/Style';
 
 const LONG_SIDE_LENGTH = 1024;
 
@@ -41,15 +42,23 @@ class MagicSamInteraction extends PointerInteraction {
         this.throttleInterval = options.throttleInterval || 1000;
 
         this.sketchFeature = null;
-        this.sketchSource = options.source;
+        this.source = options.source;
 
-        if (this.sketchSource === undefined) {
-            this.sketchSource = new VectorSource();
+        if (this.source === undefined) {
+            this.source = new VectorSource();
             this.map.addLayer(new VectorLayer({
-                source: this.sketchSource,
+                source: this.source,
                 zIndex: 200,
             }));
         }
+
+        let sketchLayer = new VectorLayer({
+            source: new VectorSource(),
+            map: this.map,
+            zIndex: 200,
+          });
+
+        this.sketchSource = sketchLayer.getSource()
 
         this.sketchStyle = options.style === undefined ? null : options.style;
 
@@ -161,8 +170,8 @@ class MagicSamInteraction extends PointerInteraction {
      */
     toggleActive() {
         if (!this.getActive() && this.sketchFeature) {
-            if (this.sketchSource.hasFeature(this.sketchFeature)) {
-                this.sketchSource.removeFeature(this.sketchFeature);
+            if (this.source.hasFeature(this.sketchFeature)) {
+                this.source.removeFeature(this.sketchFeature);
             }
             this.sketchFeature = null;
         }
@@ -246,6 +255,7 @@ class MagicSamInteraction extends PointerInteraction {
         // This happens if the sketch feature was newly created (above) or if an annotation
         // was created from the feature (which may also remove the sketch from its source).
         if (!this.sketchSource.hasFeature(this.sketchFeature)) {
+            this.sketchSource.clear();
             this.sketchSource.addFeature(this.sketchFeature);
         }
     }
