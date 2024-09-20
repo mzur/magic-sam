@@ -41,23 +41,15 @@ class MagicSamInteraction extends PointerInteraction {
         this.throttleInterval = options.throttleInterval || 1000;
 
         this.sketchFeature = null;
-        this.source = options.source;
+        this.sketchSource = options.source;
 
-        if (this.source === undefined) {
-            this.source = new VectorSource();
+        if (this.sketchSource === undefined) {
+            this.sketchSource = new VectorSource();
             this.map.addLayer(new VectorLayer({
-                source: this.source,
+                source: this.sketchSource,
                 zIndex: 200,
             }));
         }
-
-        let sketchLayer = new VectorLayer({
-            source: new VectorSource(),
-            map: this.map,
-            zIndex: 200,
-          });
-
-        this.sketchSource = sketchLayer.getSource()
 
         this.sketchStyle = options.style === undefined ? null : options.style;
 
@@ -169,8 +161,8 @@ class MagicSamInteraction extends PointerInteraction {
      */
     toggleActive() {
         if (!this.getActive() && this.sketchFeature) {
-            if (this.source.hasFeature(this.sketchFeature)) {
-                this.source.removeFeature(this.sketchFeature);
+            if (this.sketchSource.hasFeature(this.sketchFeature)) {
+                this.sketchSource.removeFeature(this.sketchFeature);
             }
             this.sketchFeature = null;
         }
@@ -254,7 +246,6 @@ class MagicSamInteraction extends PointerInteraction {
         // This happens if the sketch feature was newly created (above) or if an annotation
         // was created from the feature (which may also remove the sketch from its source).
         if (!this.sketchSource.hasFeature(this.sketchFeature)) {
-            this.sketchSource.clear();
             this.sketchSource.addFeature(this.sketchFeature);
         }
     }
