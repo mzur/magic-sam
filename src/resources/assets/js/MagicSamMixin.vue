@@ -114,7 +114,6 @@ export default {
         initMagicSamInteraction() {
             magicSamInteraction = new MagicSamInteraction({
                 map: this.map,
-                source: this.annotationSource,
                 style: Styles.editing,
                 indicatorPointStyle: Styles.editing,
                 indicatorCrossStyle: Styles.cross,
