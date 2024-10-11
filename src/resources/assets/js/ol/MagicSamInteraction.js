@@ -9,6 +9,8 @@ import {InferenceSession, Tensor} from "onnxruntime-web/webgpu";
 import {linearRingContainsXY} from '@biigle/ol/geom/flat/contains';
 import {throttle} from '../import';
 
+
+
 const LONG_SIDE_LENGTH = 1024;
 
 function contourContainsPoint(contour, point) {
@@ -72,9 +74,10 @@ class MagicSamInteraction extends PointerInteraction {
 
         // wasm needs to be present in the assets folder.
         this.initPromise = InferenceSession.create(options.onnxUrl, {
-                executionProviders: ['webgpu']
+                executionProviders: ['webgpu', 'webgl', 'wasm'],
             })
             .then(response => this.model = response);
+
     }
 
     setThrottleInterval(value) {
