@@ -43,15 +43,23 @@ class MagicSamInteraction extends PointerInteraction {
         this.throttleInterval = options.throttleInterval || 1000;
 
         this.sketchFeature = null;
-        this.sketchSource = options.source;
+        this.source = options.source;
 
-        if (this.sketchSource === undefined) {
-            this.sketchSource = new VectorSource();
+        if (this.source === undefined) {
+            this.source = new VectorSource();
             this.map.addLayer(new VectorLayer({
-                source: this.sketchSource,
+                source: this.source,
                 zIndex: 200,
             }));
         }
+
+        let sketchLayer = new VectorLayer({
+            source: new VectorSource(),
+            map: this.map,
+            zIndex: 200,
+        });
+
+        this.sketchSource = sketchLayer.getSource()
 
         this.sketchStyle = options.style === undefined ? null : options.style;
 
@@ -110,7 +118,14 @@ class MagicSamInteraction extends PointerInteraction {
     handleUpEvent() {
         // Do not fire the event if the user was previously dragging.
         if (this.sketchFeature && !this.isDragging) {
-            this.dispatchEvent({type: 'drawend', feature: this.sketchFeature});
+            this.source.addFeature(this.sketchFeature);
+
+            // Remove style to get a faster feedback that the drawing finished
+            this.sketchFeature.setStyle(null);
+            this.dispatchEvent({ type: 'drawend', feature: this.sketchFeature });
+
+            this.sketchSource.removeFeature(this.sketchFeature);
+            this.sketchFeature = null;
         }
 
         this.isDragging = false;
